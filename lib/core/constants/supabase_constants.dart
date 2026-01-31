@@ -1,6 +1,7 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class SupabaseConstants {
-  // Masukkan URL dan ANON KEY dari Dashboard Supabase kamu
-  static const String url = 'https://raygnspffroqtgcxcuma.supabase.co';
-  static const String anonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJheWduc3BmZnJvcXRnY3hjdW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MzU3NTksImV4cCI6MjA4NTQxMTc1OX0._LTUsTayw3LNFAuB1v937NWiOrtqZ7IuVynqQUNhFck';
+  // Sekarang kodenya mengambil dari file .env
+  static String get url => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get anonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 }

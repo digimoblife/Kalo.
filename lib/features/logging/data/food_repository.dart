@@ -92,6 +92,13 @@ class FoodRepository {
       newFood.remove('is_external');
       newFood['created_by'] = user.id; // Credit ke user yang nemu
 
+      // --- PERBAIKAN DI SINI ---
+      // API kadang kasih nilai desimal (24.9), tapi Database minta Integer.
+      // Kita bulatkan dulu (round) sebelum disimpan.
+      if (newFood['calories'] != null) {
+        newFood['calories'] = (newFood['calories'] as num).round();
+      }
+
       final inserted = await _supabase
           .from('foods')
           .insert(newFood)

@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'core/constants/supabase_constants.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
+
+// Import halaman-halaman
 import 'features/auth/presentation/login_page.dart';
 import 'features/home/presentation/home_page.dart';
-import 'package:kalo_app/features/auth/presentation/onboarding_page.dart';
+import 'features/auth/presentation/onboarding_page.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. Load Environment Variables dari file .env
+  await dotenv.load(fileName: ".env");
+
+  // 2. Inisialisasi Supabase (Baca dari .env, bukan hardcode lagi)
   await Supabase.initialize(
-    url: SupabaseConstants.url,
-    anonKey: SupabaseConstants.anonKey,
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
   runApp(const ProviderScope(child: MyApp()));
@@ -28,7 +34,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
         useMaterial3: true,
-        fontFamily: 'GoogleFonts.poppins', // Default font (opsional)
+        // Font default aplikasi
+        fontFamily: 'GoogleFonts.poppins',
       ),
       home: const AuthGate(),
     );
@@ -41,42 +48,42 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // StreamBuilder mendengarkan status login Supabase secara live
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
 
-        // 1. Belum Login -> Login Page
+        // KONDISI 1: Belum Login -> Tampilkan Login Page
         if (session == null) {
           return const LoginPage();
         }
 
-        // 2. Sudah Login -> Cek Database
+        // KONDISI 2: Sudah Login -> Cek apakah User Baru? (Cek data 'height')
         return FutureBuilder(
-          // KITA UBAH SELECT QUERY-NYA:
-          // Kita ambil 'height' untuk memastikan user sudah isi data fisik atau belum
           future: Supabase.instance.client
               .from('profiles')
-              .select('height')
+              .select('height') // Kita cek kolom height
               .eq('id', session.user.id)
               .single(),
           builder: (context, profileSnapshot) {
+            // Tampilkan loading saat mengecek database
             if (profileSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                body: Center(
+                  child: CircularProgressIndicator(color: Colors.black),
+                ),
               );
             }
 
             final data = profileSnapshot.data;
 
-            // LOGIKA BARU:
-            // Cek apakah 'height' masih kosong?
-            // Jika ya, berarti belum onboarding -> Lempar ke OnboardingPage
+            // Logika: Jika 'height' kosong/null, berarti user belum isi Onboarding
             if (data == null || data['height'] == null) {
               return const OnboardingPage();
             }
 
-            // Jika tinggi badan sudah ada -> Masuk Home
+            // KONDISI 3: Login Sukses & Data Lengkap -> Masuk Dashboard
             return const HomePage();
           },
         );
