@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.2+3
 
 environment:
   sdk: ^3.10.7
@@ -45,6 +45,7 @@ dependencies:
   mobile_scanner: ^7.1.4
   http: ^1.6.0
   flutter_dotenv: ^6.0.0
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -67,8 +69,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-  assets:
-    - .env
+
+assets:
+  - .env
+  - assets/images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -100,3 +104,22 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/icon.png" # Pastikan nama file sesuai
+  min_sdk_android: 21 # Support Android lama
+  adaptive_icon_background: "#FFFFFF" # Warna background putih (Gen Z Clean)
+  adaptive_icon_foreground: "assets/images/icon.png"
+  
+
+flutter_native_splash:
+  color: "#FFFFFF" # Background Putih Bersih
+  image: "assets/images/logo.png" # Logo lengkap "Kalo."
+  branding: "assets/images/logo.png" # Opsional: Logo branding di bawah (Android 12+)
+  # color_dark: "#000000" # (Opsional) Jika HP user mode gelap, background jadi hitam
+  # image_dark: "assets/images/logo_white.png" # (Opsional) Logo versi putih jika ada. Kalau gak ada, hapus baris ini.
+  android_12:
+    image: "assets/images/logo.png"
+    icon_background_color: "#FFFFFF" 
