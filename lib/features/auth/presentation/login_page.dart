@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/auth/data/auth_repository.dart';
 import 'package:kalo_app/features/home/presentation/home_page.dart';
 
@@ -14,19 +15,17 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController(); // Hanya muncul saat Register
+  final _nameController = TextEditingController();
 
-  bool _isRegistering = false; // Toggle antara Login/Register
+  bool _isRegistering = false;
   bool _isLoading = false;
 
-  // Fungsi submit form
   Future<void> _submit() async {
     setState(() => _isLoading = true);
     final authRepo = ref.read(authRepositoryProvider);
 
     try {
       if (_isRegistering) {
-        // Mode Register
         await authRepo.register(
           _emailController.text,
           _passwordController.text,
@@ -35,15 +34,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Akun berhasil dibuat! Silahkan login.'),
+              content: Text(AppStrings.accountCreated),
             ),
           );
-          setState(() => _isRegistering = false); // Balik ke mode login
+          setState(() => _isRegistering = false);
         }
       } else {
-        // Mode Login
         await authRepo.login(_emailController.text, _passwordController.text);
-        // Jika sukses, pindah ke Home (akan dihandle di main.dart, tapi ini backup)
       }
     } catch (e) {
       if (mounted) {
@@ -66,9 +63,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. Header Logo
               Text(
-                "Kalo.",
+                AppStrings.appTitle,
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -78,8 +74,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const Gap(8),
               Text(
                 _isRegistering
-                    ? "Buat akun baru, yuk!"
-                    : "Halo, selamat datang!",
+                    ? AppStrings.registerSubtitle
+                    : AppStrings.loginSubtitle,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
@@ -87,39 +83,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               const Gap(40),
 
-              // 2. Input Fields
               if (_isRegistering) ...[
                 TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Nama Lengkap",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                  decoration: InputDecoration(
+                    labelText: AppStrings.fullName,
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.person),
                   ),
                 ),
                 const Gap(16),
               ],
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                decoration: InputDecoration(
+                  labelText: AppStrings.email,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.email),
                 ),
               ),
               const Gap(16),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Password",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
+                decoration: InputDecoration(
+                  labelText: AppStrings.password,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.lock),
                 ),
               ),
               const Gap(24),
 
-              // 3. Action Button
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
@@ -139,11 +133,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           strokeWidth: 2,
                         ),
                       )
-                    : Text(_isRegistering ? "Daftar Sekarang" : "Masuk"),
+                    : Text(_isRegistering ? AppStrings.signUp : AppStrings.signIn),
               ),
               const Gap(16),
 
-              // 4. Toggle Button
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -152,8 +145,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 },
                 child: Text(
                   _isRegistering
-                      ? "Sudah punya akun? Login"
-                      : "Belum punya akun? Daftar",
+                      ? AppStrings.alreadyHaveAccount
+                      : AppStrings.noAccountYet,
                   style: const TextStyle(color: Colors.black87),
                 ),
               ),

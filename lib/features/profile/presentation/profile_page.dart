@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/auth/data/auth_repository.dart';
 import 'package:kalo_app/features/auth/presentation/login_page.dart';
 
@@ -33,21 +34,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     final data = await Supabase.instance.client
         .from('profiles')
-        .select()
+        .select('current_weight, height, daily_calorie_target')
         .eq('id', user.id)
         .single();
 
     setState(() {
-      _weightController.text = data['current_weight']
-          .toString(); // Perhatikan nama kolom ini
+      _weightController.text = data['current_weight'].toString();
       _heightController.text = data['height'].toString();
-
-      // Deteksi apakah user pakai target manual?
-      // Logika sederhana: Kita anggap manual jika user mencentang opsi manual nanti.
-      // Untuk load awal, kita set default false dulu, atau baca dari kolom khusus jika ada.
-      // Di MVP ini kita biarkan user set ulang.
       _manualCalController.text = data['daily_calorie_target'].toString();
-
       _isLoading = false;
     });
   }
@@ -63,12 +57,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (_isManualTarget) {
         newTarget = int.parse(_manualCalController.text);
       } else {
-        // Hitung ulang BMR otomatis (Logika sederhana Mifflin-St Jeor)
-        // Kita perlu data umur & gender, tapi untuk mempersingkat di halaman ini,
-        // kita ambil data lama user dari DB atau hitung kasar.
-        // AGAR AMAN: Kita pakai target yang sedang diedit di text field saja
-        // Asumsi: User kalau mau auto, dia harusnya balik ke Onboarding,
-        // tapi di Profile Page biasanya user edit manual.
         newTarget = int.parse(_manualCalController.text);
       }
 
@@ -83,15 +71,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profil berhasil diupdate!")),
+          const SnackBar(content: Text(AppStrings.profileUpdated)),
         );
-        Navigator.pop(context); // Kembali ke Home
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
+        ).showSnackBar(SnackBar(content: Text("${AppStrings.error}$e")));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -102,14 +90,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final user = Supabase.instance.client.auth.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Profil Saya")),
+      appBar: AppBar(title: const Text(AppStrings.profileTitle)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  // AVATAR
                   const CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.black,
@@ -123,11 +110,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
                   const Gap(32),
 
-                  // FORM EDIT
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Data Fisik",
+                      AppStrings.physicalData,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -139,7 +125,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           controller: _weightController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
-                            labelText: "Berat (kg)",
+                            labelText: AppStrings.weight,
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -150,7 +136,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           controller: _heightController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
-                            labelText: "Tinggi (cm)",
+                            labelText: AppStrings.height,
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -162,7 +148,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Target Kalori",
+                      AppStrings.calorieTarget,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -171,9 +157,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     controller: _manualCalController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: "Target Harian (kkal)",
+                      labelText: AppStrings.dailyTarget,
                       border: OutlineInputBorder(),
-                      helperText: "Ubah angka ini sesuai keinginanmu",
+                      helperText: AppStrings.adjustTargetHint,
                     ),
                   ),
 
@@ -189,7 +175,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                       child: _isSaving
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("Simpan Perubahan"),
+                          : const Text(AppStrings.saveChanges),
                     ),
                   ),
 
@@ -197,12 +183,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   const Divider(),
                   const Gap(24),
 
-                  // TOMBOL LOGOUT
                   TextButton.icon(
                     onPressed: () async {
                       await ref.read(authRepositoryProvider).logout();
                       if (mounted) {
-                        // Paksa pindah ke Login Page & Hapus semua history navigasi
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -212,7 +196,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     },
                     icon: const Icon(Icons.logout, color: Colors.red),
                     label: const Text(
-                      "Keluar Akun",
+                      AppStrings.signOut,
                       style: TextStyle(color: Colors.red),
                     ),
                   ),

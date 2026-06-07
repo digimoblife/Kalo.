@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/history/data/history_repository.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
@@ -14,15 +15,13 @@ class HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<HistoryPage> {
   DateTime _selectedDate = DateTime.now();
 
-  // Fungsi Ganti Tanggal
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2024), // Batas bawah (misal saat app rilis)
-      lastDate: DateTime.now(), // Tidak bisa lihat masa depan
+      firstDate: DateTime(2024),
+      lastDate: DateTime.now(),
       builder: (context, child) {
-        // Kustomisasi warna DatePicker agar sesuai tema Gen Z Black
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
@@ -43,12 +42,11 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Ambil data berdasarkan tanggal yang dipilih (_selectedDate)
     final historyAsync = ref.watch(historyDateProvider(_selectedDate));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Riwayat Makan"),
+        title: const Text(AppStrings.foodHistory),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
@@ -58,7 +56,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       ),
       body: Column(
         children: [
-          // --- 1. DATE NAVIGATOR ---
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             color: Colors.grey[50],
@@ -80,7 +77,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     fontSize: 16,
                   ),
                 ),
-                // Disable tombol kanan jika hari ini
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: _selectedDate.day == DateTime.now().day
@@ -95,13 +91,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             ),
           ),
 
-          // --- 2. BODY CONTENT ---
           Expanded(
             child: historyAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(color: Colors.black),
               ),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+              error: (err, stack) => Center(child: Text('${AppStrings.error}$err')),
               data: (data) {
                 final logs = data['logs'] as List;
                 final summary = data['summary'] as Map<String, dynamic>;
@@ -118,7 +113,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         ),
                         const Gap(16),
                         Text(
-                          "Tidak ada data pada tanggal ini.",
+                          AppStrings.noDataForDate,
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ],
@@ -129,7 +124,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // A. MACRO SUMMARY CARD
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -140,9 +134,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _MacroItem(
-                            label: "Kalori",
+                            label: AppStrings.caloriesShort,
                             value: "${summary['calories']}",
-                            unit: "kkal",
+                            unit: AppStrings.kcal,
                             isMain: true,
                           ),
                           Container(
@@ -151,17 +145,17 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                             color: Colors.grey[800],
                           ),
                           _MacroItem(
-                            label: "Protein",
+                            label: AppStrings.protein,
                             value: "${summary['protein']}",
                             unit: "g",
                           ),
                           _MacroItem(
-                            label: "Carbs",
+                            label: AppStrings.carbs,
                             value: "${summary['carbs']}",
                             unit: "g",
                           ),
                           _MacroItem(
-                            label: "Fat",
+                            label: AppStrings.fat,
                             value: "${summary['fat']}",
                             unit: "g",
                           ),
@@ -171,7 +165,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                     const Gap(24),
                     const Text(
-                      "Detail Makanan",
+                      AppStrings.foodDetails,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -179,7 +173,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     ),
                     const Gap(12),
 
-                    // B. LIST MAKANAN
                     ...logs.map((log) {
                       final food = log['foods'];
                       return Container(
@@ -192,7 +185,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         ),
                         child: Row(
                           children: [
-                            // Jam Makan (Ambil dari created_at)
                             Text(
                               DateFormat('HH:mm').format(
                                 DateTime.parse(log['created_at']).toLocal(),
@@ -214,7 +206,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                                     ),
                                   ),
                                   Text(
-                                    "${log['portion']}x Porsi • ${log['meal_type']}",
+                                    "${log['portion']}x ${AppStrings.portion} • ${log['meal_type']}",
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],
@@ -224,7 +216,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                               ),
                             ),
                             Text(
-                              "${log['total_calories']} kkal",
+                              "${log['total_calories']} ${AppStrings.kcal}",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -244,7 +236,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 }
 
-// Widget Kecil untuk Macro (Putih di atas Hitam)
 class _MacroItem extends StatelessWidget {
   final String label;
   final String value;

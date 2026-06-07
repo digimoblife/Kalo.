@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart'; // Kita matikan dulu
 
-// Import halaman-halaman
+import 'core/constants/app_strings.dart';
 import 'features/auth/presentation/login_page.dart';
 import 'features/home/presentation/home_page.dart';
 import 'features/auth/presentation/onboarding_page.dart';
@@ -11,17 +10,11 @@ import 'features/auth/presentation/onboarding_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // --- BAGIAN INI KITA UBAH (HARDCODE) ---
-  // Kita masukkan kunci langsung di sini supaya tidak perlu baca file .env
-  // Tujuannya: Mencegah crash jika file .env tidak terbawa saat di-build.
-
   await Supabase.initialize(
-    // ⚠️ TUGAS KAMU: Ganti tulisan di dalam tanda kutip di bawah dengan URL & KEY aslimu
     url: 'https://raygnspffroqtgcxcuma.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJheWduc3BmZnJvcXRnY3hjdW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MzU3NTksImV4cCI6MjA4NTQxMTc1OX0._LTUsTayw3LNFAuB1v937NWiOrtqZ7IuVynqQUNhFck',
   );
-  // ---------------------------------------
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -32,13 +25,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kalo.',
+      title: AppStrings.appTitle,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
         useMaterial3: true,
-        // Pastikan font ini benar-benar ada di pubspec.yaml.
-        // Jika ragu, hapus baris fontFamily ini agar aman.
         fontFamily: 'GoogleFonts.poppins',
       ),
       home: const AuthGate(),

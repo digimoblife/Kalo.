@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/logging/data/food_repository.dart';
 import 'package:kalo_app/features/logging/presentation/create_food_page.dart';
-// Import Scan Food sudah DIHAPUS
 
 class AddFoodPage extends ConsumerStatefulWidget {
   const AddFoodPage({super.key});
@@ -62,18 +62,15 @@ class _AddFoodPageState extends ConsumerState<AddFoodPage> {
         title: TextField(
           controller: _searchController,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: "Cari makanan (misal: Telur Rebus)",
+          decoration: InputDecoration(
+            hintText: AppStrings.searchFoodHint,
             border: InputBorder.none,
           ),
           onChanged: _onSearchChanged,
         ),
         actions: [
-          // TOMBOL SCAN SUDAH DIHAPUS (PENDING)
-
-          // TOMBOL BUAT BARU (SHORTCUT)
           IconButton(
-            tooltip: "Buat Makanan Baru",
+            tooltip: AppStrings.createNewFood,
             icon: const Icon(Icons.playlist_add),
             onPressed: () {
               Navigator.push(
@@ -97,15 +94,14 @@ class _AddFoodPageState extends ConsumerState<AddFoodPage> {
                         Icon(Icons.search, size: 64, color: Colors.grey[300]),
                         const Gap(16),
                         Text(
-                          "Ketik min. 3 huruf untuk mencari",
+                          AppStrings.searchMinChars,
                           style: TextStyle(color: Colors.grey[600]),
                         ),
 
                         const Gap(40),
 
-                        // --- EMPTY STATE ---
                         Text(
-                          "Makanan tidak ditemukan?",
+                          AppStrings.foodNotFound,
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontSize: 14,
@@ -113,10 +109,9 @@ class _AddFoodPageState extends ConsumerState<AddFoodPage> {
                         ),
                         const Gap(12),
 
-                        // Tombol Buat Baru
                         ElevatedButton.icon(
                           icon: const Icon(Icons.add_circle_outline, size: 18),
-                          label: const Text("Buat Makanan Baru"),
+                          label: const Text(AppStrings.createNewFood),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
@@ -137,10 +132,9 @@ class _AddFoodPageState extends ConsumerState<AddFoodPage> {
                         ),
                         const Gap(8),
                         const Text(
-                          "Bantu user lain dengan melengkapi database.",
+                          AppStrings.helpOtherUsers,
                           style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
-                        // -------------------
                       ],
                     ),
                   )
@@ -167,7 +161,7 @@ class _AddFoodPageState extends ConsumerState<AddFoodPage> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "${item['calories']} kkal / 100g • P: ${item['protein']}g",
+                          "${item['calories']} ${AppStrings.kcalPer100g} • P: ${item['protein']}g",
                         ),
                         trailing: const Icon(Icons.add_circle_outline),
                         onTap: () => _showLogSheet(item),
@@ -208,14 +202,14 @@ class _LogFoodSheetState extends ConsumerState<_LogFoodSheet> {
         Navigator.pop(context);
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Makanan berhasil dicatat!")),
+          const SnackBar(content: Text(AppStrings.foodLogged)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("Gagal: $e")));
+        ).showSnackBar(SnackBar(content: Text("${AppStrings.failed}$e")));
         setState(() => _isSaving = false);
       }
     }
@@ -243,13 +237,13 @@ class _LogFoodSheetState extends ConsumerState<_LogFoodSheet> {
           ),
           const Gap(4),
           Text(
-            "$totalCal kkal (Est.)",
+            "$totalCal ${AppStrings.kcal} (Est.)",
             style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
 
           const Gap(24),
           const Text(
-            "Waktu Makan",
+            AppStrings.mealTime,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           Wrap(
@@ -273,7 +267,7 @@ class _LogFoodSheetState extends ConsumerState<_LogFoodSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                "Porsi (x100g)",
+                AppStrings.portionLabel,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
@@ -308,7 +302,7 @@ class _LogFoodSheetState extends ConsumerState<_LogFoodSheet> {
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white),
                   )
-                : const Text("Simpan ke Jurnal"),
+                : const Text(AppStrings.saveToJournal),
           ),
         ],
       ),

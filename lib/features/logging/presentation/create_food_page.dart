@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/logging/data/food_repository.dart';
 
 class CreateFoodPage extends ConsumerStatefulWidget {
@@ -13,18 +14,15 @@ class CreateFoodPage extends ConsumerStatefulWidget {
 class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   final _nameController = TextEditingController();
   final _calController = TextEditingController();
   final _proteinController = TextEditingController(text: '0');
   final _carbsController = TextEditingController(text: '0');
   final _fatController = TextEditingController(text: '0');
-  final _unitController = TextEditingController(
-    text: 'Porsi',
-  ); // Default: Porsi
+  final _unitController = TextEditingController(text: 'Portion');
 
   bool _isSaving = false;
-  String _selectedMeal = 'Lunch'; // Default waktu makan
+  String _selectedMeal = 'Lunch';
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -32,43 +30,38 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
     setState(() => _isSaving = true);
 
     try {
-      // 1. Siapkan Data Makanan Baru
       final newFoodData = {
-        'id': null, // null menandakan ini makanan BARU (belum ada di DB)
+        'id': null,
         'name': _nameController.text,
         'calories': int.parse(_calController.text),
         'protein': double.tryParse(_proteinController.text) ?? 0,
         'carbs': double.tryParse(_carbsController.text) ?? 0,
         'fats': double.tryParse(_fatController.text) ?? 0,
-        'serving_size': 1.0, // Kita anggap inputan user adalah untuk "1 Porsi"
+        'serving_size': 1.0,
         'serving_unit': _unitController.text,
         'is_external': false,
       };
 
-      // 2. Panggil Repository untuk Simpan & Log
-      // Logika di repository kita sudah pintar:
-      // Jika id=null, dia akan INSERT ke tabel 'foods' dulu, baru INSERT ke 'food_logs'
       await ref
           .read(foodRepositoryProvider)
           .logFood(
             foodData: newFoodData,
             mealType: _selectedMeal,
-            portion: 1.0, // Default 1 porsi saat create
+            portion: 1.0,
           );
 
       if (mounted) {
-        // Sukses! Tutup halaman ini & halaman search, kembali ke Dashboard
-        Navigator.pop(context); // Tutup CreatePage
-        Navigator.pop(context); // Tutup AddFoodPage
+        Navigator.pop(context);
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Makanan berhasil dibuat & dicatat!")),
+          const SnackBar(content: Text(AppStrings.foodCreatedAndLogged)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
+        ).showSnackBar(SnackBar(content: Text("${AppStrings.error}$e")));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -78,7 +71,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Input Makanan Manual")),
+      appBar: AppBar(title: const Text(AppStrings.manualFoodEntry)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -87,25 +80,23 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                "Data ini akan disimpan ke database publik agar bisa dipakai orang lain.",
+                AppStrings.publicDatabaseNotice,
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
               const Gap(24),
 
-              // NAMA MAKANAN
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: "Nama Makanan *",
-                  hintText: "Contoh: Nasi Goreng Spesial",
+                  labelText: AppStrings.foodName,
+                  hintText: AppStrings.foodNameExample,
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.fastfood),
                 ),
-                validator: (v) => v!.isEmpty ? "Wajib diisi" : null,
+                validator: (v) => v!.isEmpty ? AppStrings.required : null,
               ),
               const Gap(16),
 
-              // KALORI & UNIT
               Row(
                 children: [
                   Expanded(
@@ -113,11 +104,11 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
                       controller: _calController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: "Kalori (kkal) *",
+                        labelText: AppStrings.calories,
                         border: OutlineInputBorder(),
-                        suffixText: "kkal",
+                        suffixText: AppStrings.kcal,
                       ),
-                      validator: (v) => v!.isEmpty ? "Wajib" : null,
+                      validator: (v) => v!.isEmpty ? AppStrings.required : null,
                     ),
                   ),
                   const Gap(16),
@@ -125,8 +116,8 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
                     child: TextFormField(
                       controller: _unitController,
                       decoration: const InputDecoration(
-                        labelText: "Satuan",
-                        hintText: "Porsi/Mangkok",
+                        labelText: AppStrings.unit,
+                        hintText: AppStrings.unitHint,
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -136,7 +127,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
               const Gap(24),
 
               const Text(
-                "Makronutrisi (Opsional)",
+                AppStrings.macronutrients,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const Gap(8),
@@ -144,7 +135,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
                 children: [
                   Expanded(
                     child: _MacroInput(
-                      label: "Protein",
+                      label: AppStrings.protein,
                       controller: _proteinController,
                       color: Colors.green,
                     ),
@@ -152,7 +143,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
                   const Gap(8),
                   Expanded(
                     child: _MacroInput(
-                      label: "Carbs",
+                      label: AppStrings.carbs,
                       controller: _carbsController,
                       color: Colors.orange,
                     ),
@@ -160,7 +151,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
                   const Gap(8),
                   Expanded(
                     child: _MacroInput(
-                      label: "Fat",
+                      label: AppStrings.fat,
                       controller: _fatController,
                       color: Colors.red,
                     ),
@@ -170,7 +161,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
 
               const Gap(32),
               const Text(
-                "Dimakan saat?",
+                AppStrings.whenDidYouEat,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Wrap(
@@ -199,7 +190,7 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
                 ),
                 child: _isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Simpan & Catat"),
+                    : const Text(AppStrings.saveAndLog),
               ),
             ],
           ),
@@ -209,7 +200,6 @@ class _CreateFoodPageState extends ConsumerState<CreateFoodPage> {
   }
 }
 
-// Widget Kecil untuk Input Makro
 class _MacroInput extends StatelessWidget {
   final String label;
   final TextEditingController controller;

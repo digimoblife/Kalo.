@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/home/presentation/home_page.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -16,23 +17,19 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _formKey = GlobalKey<FormState>();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
-  final _manualCalorieController =
-      TextEditingController(); // Controller baru untuk input manual
+  final _manualCalorieController = TextEditingController();
 
   String _gender = 'Male';
   String _activityLevel = 'Sedentary';
   DateTime? _birthDate;
   bool _isLoading = false;
 
-  // State untuk opsi manual
   bool _isManualTarget = false;
 
-  // Rumus Mifflin-St Jeor
   int _calculateTDEE(int age) {
     final double weight = double.tryParse(_weightController.text) ?? 0;
     final double height = double.tryParse(_heightController.text) ?? 0;
 
-    // 1. Hitung BMR
     double bmr;
     if (_gender == 'Male') {
       bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
@@ -40,7 +37,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
     }
 
-    // 2. Kalikan dengan Aktivitas
     double multiplier;
     switch (_activityLevel) {
       case 'Sedentary':
@@ -65,7 +61,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   Future<void> _submitData() async {
     if (!_formKey.currentState!.validate() || _birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon lengkapi data fisik Anda')),
+        const SnackBar(content: Text(AppStrings.completePhysicalData)),
       );
       return;
     }
@@ -74,16 +70,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
-    // Hitung Umur
     final age = DateTime.now().year - _birthDate!.year;
 
-    // LOGIKA PENENTUAN TARGET KALORI
     int finalTargetCalorie;
     if (_isManualTarget) {
-      // Jika manual, pakai inputan user
       finalTargetCalorie = int.parse(_manualCalorieController.text);
     } else {
-      // Jika otomatis, pakai rumus
       finalTargetCalorie = _calculateTDEE(age);
     }
 
@@ -96,7 +88,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             'birth_date': _birthDate!.toIso8601String(),
             'gender': _gender,
             'activity_level': _activityLevel,
-            'daily_calorie_target': finalTargetCalorie, // Nilai final disimpan
+            'daily_calorie_target': finalTargetCalorie,
             'current_streak': 0,
           })
           .eq('id', user.id);
@@ -110,7 +102,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        ).showSnackBar(SnackBar(content: Text('${AppStrings.error}${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -120,7 +112,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Isi Data Diri")),
+      appBar: AppBar(title: const Text(AppStrings.onboardingTitle)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -128,21 +120,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                "Data fisik tetap diperlukan untuk memantau progress Anda.",
-              ),
+              const Text(AppStrings.onboardingSubtitle),
               const Gap(24),
 
-              // --- FORM DATA FISIK (Tetap Wajib) ---
               const Text(
-                "Jenis Kelamin",
+                AppStrings.gender,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Row(
                 children: [
                   Expanded(
                     child: RadioListTile(
-                      title: const Text("Pria"),
+                      title: const Text(AppStrings.male),
                       value: "Male",
                       groupValue: _gender,
                       onChanged: (v) => setState(() => _gender = v.toString()),
@@ -150,7 +139,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   ),
                   Expanded(
                     child: RadioListTile(
-                      title: const Text("Wanita"),
+                      title: const Text(AppStrings.female),
                       value: "Female",
                       groupValue: _gender,
                       onChanged: (v) => setState(() => _gender = v.toString()),
@@ -166,11 +155,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     child: TextFormField(
                       controller: _weightController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: "Berat (kg)",
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppStrings.weight,
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (v) => v!.isEmpty ? "Wajib isi" : null,
+                      validator: (v) => v!.isEmpty ? AppStrings.required : null,
                     ),
                   ),
                   const Gap(16),
@@ -178,11 +167,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     child: TextFormField(
                       controller: _heightController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: "Tinggi (cm)",
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppStrings.height,
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (v) => v!.isEmpty ? "Wajib isi" : null,
+                      validator: (v) => v!.isEmpty ? AppStrings.required : null,
                     ),
                   ),
                 ],
@@ -201,13 +190,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 },
                 child: InputDecorator(
                   decoration: const InputDecoration(
-                    labelText: "Tanggal Lahir",
+                    labelText: AppStrings.dateOfBirth,
                     border: OutlineInputBorder(),
                     suffixIcon: Icon(Icons.calendar_today),
                   ),
                   child: Text(
                     _birthDate == null
-                        ? "Pilih Tanggal"
+                        ? AppStrings.selectDate
                         : DateFormat('dd MMM yyyy').format(_birthDate!),
                   ),
                 ),
@@ -217,25 +206,25 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               DropdownButtonFormField<String>(
                 value: _activityLevel,
                 decoration: const InputDecoration(
-                  labelText: "Aktivitas Fisik",
+                  labelText: AppStrings.physicalActivity,
                   border: OutlineInputBorder(),
                 ),
                 items: const [
                   DropdownMenuItem(
                     value: 'Sedentary',
-                    child: Text("Jarang Olahraga"),
+                    child: Text(AppStrings.sedentary),
                   ),
                   DropdownMenuItem(
                     value: 'Light',
-                    child: Text("Ringan (1-3x/minggu)"),
+                    child: Text(AppStrings.light),
                   ),
                   DropdownMenuItem(
                     value: 'Moderate',
-                    child: Text("Sedang (3-5x/minggu)"),
+                    child: Text(AppStrings.moderate),
                   ),
                   DropdownMenuItem(
                     value: 'Active',
-                    child: Text("Aktif (Tiap hari)"),
+                    child: Text(AppStrings.active),
                   ),
                 ],
                 onChanged: (v) => setState(() => _activityLevel = v!),
@@ -243,12 +232,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
               const Divider(height: 48, thickness: 1),
 
-              // --- FITUR BARU: Opsi Target Manual ---
               SwitchListTile(
-                title: const Text("Atur Target Kalori Sendiri?"),
-                subtitle: const Text(
-                  "Aktifkan jika Anda sudah punya angka target spesifik dari dokter/coach.",
-                ),
+                title: const Text(AppStrings.setCustomTarget),
+                subtitle: const Text(AppStrings.customTargetHint),
                 value: _isManualTarget,
                 activeColor: Colors.black,
                 onChanged: (val) {
@@ -258,7 +244,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 },
               ),
 
-              // Tampilkan Input Field HANYA jika Switch Aktif
               if (_isManualTarget)
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
@@ -266,15 +251,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     controller: _manualCalorieController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: "Target Kalori Harian (Manual)",
+                      labelText: AppStrings.manualTargetLabel,
                       border: OutlineInputBorder(),
-                      suffixText: "kkal",
-                      helperText: "Contoh: 1800",
+                      suffixText: AppStrings.kcal,
+                      helperText: AppStrings.example1800,
                     ),
                     validator: (v) {
-                      // Validasi: Wajib diisi JIKA mode manual aktif
                       if (_isManualTarget && (v == null || v.isEmpty)) {
-                        return "Mohon isi target kalori Anda";
+                        return AppStrings.enterCalorieTarget;
                       }
                       return null;
                     },
@@ -294,7 +278,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          "Target kalori akan dihitung otomatis oleh sistem berdasarkan data fisik di atas.",
+                          AppStrings.autoTargetInfo,
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -314,8 +298,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     ? const CircularProgressIndicator(color: Colors.white)
                     : Text(
                         _isManualTarget
-                            ? "Simpan Target Manual"
-                            : "Hitung & Simpan",
+                            ? AppStrings.saveManualTarget
+                            : AppStrings.calculateAndSave,
                       ),
               ),
             ],
