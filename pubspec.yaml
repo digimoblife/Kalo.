@@ -44,6 +44,7 @@ dependencies:
   gap: ^3.0.1
   mobile_scanner: ^7.1.4
   http: ^1.6.0
+  confetti: ^0.7.0
   flutter_dotenv: ^6.0.0
   flutter_native_splash: ^2.4.7
 

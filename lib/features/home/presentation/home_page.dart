@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/home/data/home_repository.dart';
-import 'package:kalo_app/features/auth/data/auth_repository.dart';
 import 'package:kalo_app/features/logging/presentation/add_food_page.dart';
-import 'package:kalo_app/features/history/presentation/history_page.dart'; // Import Halaman History
+import 'package:kalo_app/features/history/presentation/history_page.dart';
 import 'package:kalo_app/features/profile/presentation/profile_page.dart';
+import 'package:kalo_app/core/services/streak_service.dart';
+import 'package:kalo_app/features/home/presentation/widgets/streak_milestone_dialog.dart';
+import 'package:kalo_app/features/home/presentation/widgets/weekly_insights_card.dart';
+import 'package:kalo_app/features/home/presentation/widgets/water_progress_ring.dart';
+import 'package:kalo_app/features/home/presentation/widgets/macro_progress_rings.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Mengambil data dari Repository (Real-time)
     final dashboardAsync = ref.watch(dashboardDataProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white, // Clean Look
-      // --- APP BAR (Header) ---
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // 1. TOMBOL HISTORY (Kiri)
         leading: IconButton(
           icon: const Icon(Icons.history_edu),
-          tooltip: "Riwayat",
+          tooltip: AppStrings.historyTooltip,
           onPressed: () {
             Navigator.push(
               context,
@@ -33,24 +35,21 @@ class HomePage extends ConsumerWidget {
           },
         ),
 
-        // 2. JUDUL TENGAH
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Kalo.",
+              AppStrings.appTitle,
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
-            const Text(
-              "Dashboard",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            Text(
+              AppStrings.dashboard,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ],
         ),
 
-        // 3. STREAK & LOGOUT (Kanan)
         actions: [
-          // Widget Streak
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -67,10 +66,9 @@ class HomePage extends ConsumerWidget {
                   size: 20,
                 ),
                 const Gap(4),
-                // Tampilkan Streak dari Database
                 dashboardAsync.when(
                   data: (data) => Text(
-                    "${data['profile']['current_streak']} Hari",
+                    "${data['profile']['current_streak']} ${AppStrings.day}",
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.orange,
@@ -86,36 +84,56 @@ class HomePage extends ConsumerWidget {
               ],
             ),
           ),
-          // Tombol Profil
           IconButton(
             icon: const CircleAvatar(
               radius: 14,
               backgroundColor: Colors.black,
               child: Icon(Icons.person, size: 16, color: Colors.white),
             ),
-            tooltip: "Profil Saya",
+            tooltip: AppStrings.myProfile,
             onPressed: () async {
-              // Buka halaman profil
               await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfilePage()),
               );
-              // Refresh dashboard saat kembali (siapa tahu user ganti target kalori)
               ref.refresh(dashboardDataProvider);
             },
           ),
         ],
       ),
 
-      // --- BODY ---
       body: dashboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (err, stack) => Center(child: Text('${AppStrings.error}$err')),
         data: (data) {
           final int target = data['profile']['daily_calorie_target'] ?? 2000;
           final int consumed = data['totalConsumed'];
           final double progress = (consumed / target).clamp(0.0, 1.0);
-          final int remaining = target - consumed;
+
+          final int proteinTarget = data['profile']['protein_target_gram'] ?? 150;
+          final int carbsTarget = data['profile']['carbs_target_gram'] ?? 200;
+          final int fatsTarget = data['profile']['fats_target_gram'] ?? 67;
+          final int totalProtein = data['totalProtein'] ?? 0;
+          final int totalCarbs = data['totalCarbs'] ?? 0;
+          final int totalFats = data['totalFats'] ?? 0;
+
+          final int currentStreak = data['profile']['current_streak'] ?? 0;
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            final milestone = await StreakService.checkMilestone(currentStreak);
+            if (milestone != null && context.mounted) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => StreakMilestoneDialog(
+                  milestone: milestone,
+                  onDismiss: () async {
+                    Navigator.pop(context);
+                    await StreakService.markCelebrated(milestone);
+                  },
+                ),
+              );
+            }
+          });
 
           return RefreshIndicator(
             onRefresh: () async => ref.refresh(dashboardDataProvider),
@@ -123,11 +141,9 @@ class HomePage extends ConsumerWidget {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  // A. HERO SECTION (Progress Ring)
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Lingkaran Background
                       SizedBox(
                         width: 200,
                         height: 200,
@@ -137,7 +153,6 @@ class HomePage extends ConsumerWidget {
                           color: Colors.grey[200],
                         ),
                       ),
-                      // Lingkaran Progress Utama
                       SizedBox(
                         width: 200,
                         height: 200,
@@ -148,7 +163,6 @@ class HomePage extends ConsumerWidget {
                           strokeCap: StrokeCap.round,
                         ),
                       ),
-                      // Teks di Tengah
                       Column(
                         children: [
                           Text(
@@ -160,7 +174,7 @@ class HomePage extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            "dari $target kkal",
+                            "${AppStrings.of} $target ${AppStrings.kcal}",
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 16,
@@ -173,46 +187,26 @@ class HomePage extends ConsumerWidget {
 
                   const Gap(32),
 
-                  // B. SUMMARY CARD
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _SummaryItem(
-                          title: "Sisa",
-                          value: "$remaining",
-                          unit: "kkal",
-                        ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: Colors.grey[300],
-                        ),
-                        _SummaryItem(
-                          title: "Protein",
-                          value: "0",
-                          unit: "g",
-                        ), // Placeholder (Hitungan ada di History)
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: Colors.grey[300],
-                        ),
-                        _SummaryItem(title: "Carbs", value: "0", unit: "g"),
-                      ],
-                    ),
+                  MacroProgressRings(
+                    proteinCurrent: totalProtein,
+                    proteinTarget: proteinTarget,
+                    carbsCurrent: totalCarbs,
+                    carbsTarget: carbsTarget,
+                    fatsCurrent: totalFats,
+                    fatsTarget: fatsTarget,
                   ),
 
-                  const Gap(32),
+                  const Gap(24),
 
-                  // C. LIST MAKANAN (LOGS)
+                  WaterProgressRing(),
+
+                  const Gap(24),
+
+                  WeeklyInsightsCard(),
+
+                  const Gap(24),
+
                   if ((data['logs'] as List).isEmpty) ...[
-                    // Tampilan Kosong (Empty State)
                     Column(
                       children: [
                         Icon(
@@ -221,39 +215,35 @@ class HomePage extends ConsumerWidget {
                           color: Colors.grey[300],
                         ),
                         const Gap(16),
-                        const Text("Belum ada makanan tercatat hari ini."),
-                        const Text(
-                          "Yuk mulai tracking!",
-                          style: TextStyle(color: Colors.grey),
+                        const Text(AppStrings.noFoodToday),
+                        Text(
+                          AppStrings.startTracking,
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
                   ] else ...[
-                    // Header List
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          "Riwayat Makan",
+                          AppStrings.foodLog,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
                         Text(
-                          "${(data['logs'] as List).length} item",
+                          "${(data['logs'] as List).length} ${AppStrings.items}",
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ],
                     ),
                     const Gap(16),
 
-                    // List Item Makanan
                     ListView.separated(
-                      shrinkWrap:
-                          true, // Wajib agar tidak error di dalam SingleChildScrollView
-                      physics:
-                          const NeverScrollableScrollPhysics(), // Scroll ikut induknya
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: (data['logs'] as List).length,
                       separatorBuilder: (_, __) => const Gap(12),
                       itemBuilder: (context, index) {
@@ -276,7 +266,6 @@ class HomePage extends ConsumerWidget {
                           ),
                           child: Row(
                             children: [
-                              // Icon berdasarkan Meal Type
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
@@ -291,7 +280,6 @@ class HomePage extends ConsumerWidget {
                               ),
                               const Gap(16),
 
-                              // Nama & Porsi
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +294,7 @@ class HomePage extends ConsumerWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
-                                      "${log['meal_type']} • ${log['portion']}x Porsi",
+                                      "${log['meal_type']} • ${log['portion']}x ${AppStrings.portion}",
                                       style: TextStyle(
                                         color: Colors.grey[600],
                                         fontSize: 12,
@@ -316,9 +304,8 @@ class HomePage extends ConsumerWidget {
                                 ),
                               ),
 
-                              // Total Kalori Item Ini
                               Text(
-                                "${log['total_calories']} kkal",
+                                "${log['total_calories']} ${AppStrings.kcal}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 16,
@@ -329,9 +316,7 @@ class HomePage extends ConsumerWidget {
                         );
                       },
                     ),
-                    const Gap(
-                      80,
-                    ), // Jarak ekstra di bawah agar tidak tertutup tombol FAB
+                    const Gap(80),
                   ],
                 ],
               ),
@@ -340,65 +325,24 @@ class HomePage extends ConsumerWidget {
         },
       ),
 
-      // --- FAB (Tombol Tambah) ---
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // 1. Tunggu user kembali dari halaman AddFoodPage
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddFoodPage()),
           );
-          // 2. Refresh data dashboard agar update
           ref.refresh(dashboardDataProvider);
         },
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text("Catat Makan"),
+        label: const Text(AppStrings.logFood),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
 
-// Widget Kecil untuk Summary
-class _SummaryItem extends StatelessWidget {
-  final String title;
-  final String value;
-  final String unit;
-
-  const _SummaryItem({
-    required this.title,
-    required this.value,
-    required this.unit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-        const Gap(4),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            const SizedBox(width: 2),
-            Text(
-              unit,
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// Helper Function untuk Icon
 IconData _getMealIcon(String type) {
   switch (type) {
     case 'Breakfast':
