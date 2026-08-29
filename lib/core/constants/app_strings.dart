@@ -62,7 +62,7 @@ class AppStrings {
   // Add Food Page
   static const String searchFoodHint = 'Search food (e.g., Boiled Egg)';
   static const String createNewFood = 'Create New Food';
-  static const String searchMinChars = 'Type at least 3 characters to search';
+  static const String searchMinChars = 'Type at least 2 characters to search';
   static const String foodNotFound = 'Food not found?';
   static const String helpOtherUsers = 'Help other users by completing the database.';
   static const String kcalPer100g = 'kcal / 100g';
@@ -129,4 +129,16 @@ class AppStrings {
   static const String avgCalories = 'Avg Calories';
   static const String consistency = 'Consistency';
   static const String topFood = 'Top Food';
+
+  // Monthly Recap
+  static const String monthlyRecap = 'Monthly Recap';
+  static const String recapSubtitle = 'Your consistency summary for this month';
+  static const String daysConsistent = 'days consistent!';
+  static const String bestStreak = 'Best Streak';
+  static const String totalMealsLogged = 'Total Logged';
+  static const String avgWaterDaily = 'Avg Water';
+  static const String shareRecap = 'Share Recap';
+  static const String madeWithKalo = 'created with Kalo.';
+  static const String noRecapData = 'Not enough log data for this month yet. Start tracking today!';
+  static const String keepBuildingHabit = 'Keep building your healthy habit!';
 }

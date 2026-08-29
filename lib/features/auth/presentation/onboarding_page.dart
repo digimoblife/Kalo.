@@ -70,7 +70,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
-    final age = DateTime.now().year - _birthDate!.year;
+    final now = DateTime.now();
+    int age = now.year - _birthDate!.year;
+    if (now.month < _birthDate!.month ||
+        (now.month == _birthDate!.month && now.day < _birthDate!.day)) {
+      age--;
+    }
 
     int finalTargetCalorie;
     if (_isManualTarget) {

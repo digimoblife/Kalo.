@@ -20,12 +20,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   bool _isLoading = true;
   bool _isSaving = false;
-  bool _isManualTarget = false;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    _heightController.dispose();
+    _manualCalController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {
@@ -52,13 +59,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (user == null) return;
 
     try {
-      int newTarget;
-
-      if (_isManualTarget) {
-        newTarget = int.parse(_manualCalController.text);
-      } else {
-        newTarget = int.parse(_manualCalController.text);
-      }
+      final newTarget = int.parse(_manualCalController.text);
 
       await Supabase.instance.client
           .from('profiles')
@@ -76,10 +77,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("${AppStrings.error}$e")));
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

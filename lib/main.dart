@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/app_strings.dart';
+import 'core/constants/supabase_constants.dart';
 import 'features/auth/presentation/login_page.dart';
 import 'features/home/presentation/home_page.dart';
 import 'features/auth/presentation/onboarding_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   await Supabase.initialize(
-    url: 'https://raygnspffroqtgcxcuma.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJheWduc3BmZnJvcXRnY3hjdW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MzU3NTksImV4cCI6MjA4NTQxMTc1OX0._LTUsTayw3LNFAuB1v937NWiOrtqZ7IuVynqQUNhFck',
+    url: SupabaseConstants.url,
+    anonKey: SupabaseConstants.anonKey,
   );
 
   runApp(const ProviderScope(child: MyApp()));
@@ -30,7 +33,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
         useMaterial3: true,
-        fontFamily: 'GoogleFonts.poppins',
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
       home: const AuthGate(),
     );

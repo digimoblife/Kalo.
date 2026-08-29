@@ -50,7 +50,7 @@ class WeeklyInsightsCard extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: diffColor.withOpacity(0.1),
+                      color: diffColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -92,6 +92,7 @@ class WeeklyInsightsCard extends ConsumerWidget {
                       value: topFood,
                       unit: '',
                       subtitle: 'Most logged',
+                      isText: true,
                     ),
                   ),
                 ],
@@ -137,12 +138,14 @@ class _InsightItem extends StatelessWidget {
   final String value;
   final String unit;
   final String subtitle;
+  final bool isText;
 
   const _InsightItem({
     required this.label,
     required this.value,
     required this.unit,
     required this.subtitle,
+    this.isText = false,
   });
 
   @override
@@ -156,9 +159,17 @@ class _InsightItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            Flexible(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isText ? 14 : 20,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
             ),
             if (unit.isNotEmpty) ...[
               const Gap(2),
@@ -167,7 +178,12 @@ class _InsightItem extends StatelessWidget {
           ],
         ),
         const Gap(2),
-        Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }
@@ -192,7 +208,7 @@ class _MacroAvgItem extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(

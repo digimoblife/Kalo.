@@ -15,6 +15,13 @@ class WaterBottomSheet extends ConsumerStatefulWidget {
 class _WaterBottomSheetState extends ConsumerState<WaterBottomSheet> {
   int _customAmount = 250;
   bool _isSaving = false;
+  final _targetController = TextEditingController();
+
+  @override
+  void dispose() {
+    _targetController.dispose();
+    super.dispose();
+  }
 
   Future<void> _addWater(int amount) async {
     setState(() => _isSaving = true);
@@ -150,12 +157,14 @@ class _WaterBottomSheetState extends ConsumerState<WaterBottomSheet> {
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
                 data: (target) {
-                  final controller = TextEditingController(text: target.toString());
+                  if (_targetController.text.isEmpty) {
+                    _targetController.text = target.toString();
+                  }
                   return Row(
                     children: [
                       Expanded(
                         child: TextFormField(
-                          controller: controller,
+                          controller: _targetController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                             labelText: AppStrings.targetMl,
@@ -167,7 +176,7 @@ class _WaterBottomSheetState extends ConsumerState<WaterBottomSheet> {
                       const Gap(12),
                       ElevatedButton(
                         onPressed: () async {
-                          final newTarget = int.tryParse(controller.text) ?? 2000;
+                          final newTarget = int.tryParse(_targetController.text) ?? 2000;
                           await ref.read(waterRepositoryProvider).setTarget(newTarget);
                           if (mounted) {
                             Navigator.pop(context);

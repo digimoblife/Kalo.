@@ -81,7 +81,7 @@ class _MacroRing extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: 1,
                 strokeWidth: 8,
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
               ),
             ),
             SizedBox(

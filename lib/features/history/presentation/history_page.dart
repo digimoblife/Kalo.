@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/history/data/history_repository.dart';
+import 'package:kalo_app/features/logging/data/food_repository.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -42,7 +43,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final historyAsync = ref.watch(historyDateProvider(_selectedDate));
+    final dateString = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final historyAsync = ref.watch(historyDateProvider(dateString));
 
     return Scaffold(
       appBar: AppBar(
@@ -79,7 +81,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: _selectedDate.day == DateTime.now().day
+                  onPressed: DateUtils.isSameDay(_selectedDate, DateTime.now())
                       ? null
                       : () => setState(
                           () => _selectedDate = _selectedDate.add(
@@ -175,56 +177,76 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                     ...logs.map((log) {
                       final food = log['foods'];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
+                      return Dismissible(
+                        key: ValueKey(log['id']),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        child: Row(
-                          children: [
-                            Text(
-                              DateFormat('HH:mm').format(
-                                DateTime.parse(log['created_at']).toLocal(),
+                        onDismissed: (_) async {
+                          await ref
+                              .read(foodRepositoryProvider)
+                              .deleteLog(log['id']);
+                          ref.invalidate(historyDateProvider(dateString));
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                DateFormat('HH:mm').format(
+                                  DateTime.parse(log['created_at']).toLocal(),
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
                               ),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const Gap(16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    food['name'],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                              const Gap(16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      food['name'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    "${log['portion']}x ${AppStrings.portion} • ${log['meal_type']}",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
+                                    Text(
+                                      "${log['portion']}x ${AppStrings.portion} • ${log['meal_type']}",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Text(
-                              "${log['total_calories']} ${AppStrings.kcal}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                              Text(
+                                "${log['total_calories']} ${AppStrings.kcal}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 );
               },

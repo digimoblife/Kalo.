@@ -64,9 +64,9 @@ class InsightsRepository {
       'avgCalories': avgCals.round(),
       'target': target,
       'calorieDiff': calorieDiff,
-      'avgProtein': (totalP / 7).round(),
-      'avgCarbs': (totalC / 7).round(),
-      'avgFats': (totalF / 7).round(),
+      'avgProtein': daysLogged > 0 ? (totalP / daysLogged).round() : 0,
+      'avgCarbs': daysLogged > 0 ? (totalC / daysLogged).round() : 0,
+      'avgFats': daysLogged > 0 ? (totalF / daysLogged).round() : 0,
       'topFood': topFood,
     };
   }

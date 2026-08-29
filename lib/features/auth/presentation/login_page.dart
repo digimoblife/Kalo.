@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:kalo_app/core/constants/app_strings.dart';
 import 'package:kalo_app/features/auth/data/auth_repository.dart';
-import 'package:kalo_app/features/home/presentation/home_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});

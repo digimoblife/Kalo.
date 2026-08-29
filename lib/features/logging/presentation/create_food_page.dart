@@ -220,7 +220,7 @@ class _MacroInput extends StatelessWidget {
         labelText: label,
         suffixText: "g",
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: color.withOpacity(0.5)),
+          borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: color, width: 2),

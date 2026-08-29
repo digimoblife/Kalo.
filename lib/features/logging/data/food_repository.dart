@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -51,7 +52,7 @@ class FoodRepository {
       }
     } catch (e) {
       // Jika internet mati/API error, abaikan saja (tetap return hasil lokal)
-      print("API Error: $e");
+      debugPrint("API Error: $e");
     }
 
     // 3. GABUNGKAN HASIL (Lokal dulu, baru Eksternal)
@@ -110,20 +111,65 @@ class FoodRepository {
     }
 
     // STEP B: Hitung Total Kalori berdasarkan Porsi
-    // Rumus: (Kalori Makanan / Serving Size Reference) * Porsi Input
-    // Asumsi sederhana MVP: Porsi input adalah Multiplier dari Serving Size
-    // Misal: Database 100g (100kkal). User makan 1.5 porsi (150g) -> 150kkal.
     final baseCalories = foodData['calories'] as num;
     final totalCalories = (baseCalories * portion).round();
+    final todayString = DateTime.now().toIso8601String().split('T')[0];
 
     // STEP C: Simpan ke 'food_logs'
     await _supabase.from('food_logs').insert({
       'user_id': user.id,
       'food_id': foodId,
-      'log_date': DateTime.now().toIso8601String(),
+      'log_date': todayString,
       'meal_type': mealType,
       'portion': portion,
       'total_calories': totalCalories,
     });
+
+    // STEP D: Update Streak
+    try {
+      final profile = await _supabase
+          .from('profiles')
+          .select('current_streak, last_log_date')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profile != null) {
+        final int currentStreak = profile['current_streak'] ?? 0;
+        final String? lastLogDateStr = profile['last_log_date']?.toString();
+
+        if (lastLogDateStr != todayString) {
+          final today = DateTime.now();
+          final yesterday = today.subtract(const Duration(days: 1));
+          final yesterdayStr = yesterday.toIso8601String().split('T')[0];
+
+          int newStreak;
+          if (lastLogDateStr == yesterdayStr) {
+            newStreak = currentStreak + 1;
+          } else {
+            newStreak = 1;
+          }
+
+          await _supabase.from('profiles').update({
+            'current_streak': newStreak,
+            'last_log_date': todayString,
+          }).eq('id', user.id);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating streak: $e');
+    }
+  }
+
+  // Fungsi Hapus Log Makanan
+  Future<void> deleteLog(int logId) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    await _supabase
+        .from('food_logs')
+        .delete()
+        .eq('id', logId)
+        .eq('user_id', user.id);
   }
 }
+

@@ -21,9 +21,14 @@ class _AddFoodPageState extends ConsumerState<AddFoodPage> {
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
+    if (query.length < 2) {
+      setState(() {
+        _results = [];
+        _isLoading = false;
+      });
+      return;
+    }
     _debounce = Timer(const Duration(milliseconds: 500), () async {
-      if (query.length < 3) return;
-
       setState(() => _isLoading = true);
       final repo = ref.read(foodRepositoryProvider);
       final results = await repo.searchFood(query);
